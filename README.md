@@ -4,7 +4,7 @@ This repository contains a collection of SQL queries I wrote while completing va
 
 The queries cover a wide range of SQL concepts, including:
 
-##🔹 Topics Covered:
+## 🔹 Topics Covered:
 
 Basic Filtering – WHERE, BETWEEN, LIKE, logical operators
 
