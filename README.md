@@ -1,8 +1,9 @@
 # 📘 SQL Practice Queries
 
 This repository contains a collection of SQL queries I wrote while completing SQL courses. 
-15 DAYS OF SQL: THE COMPLETE SQL MASTERCLASS 2025 (PostgreSQL)- [Certificate link]([url](https://udemy-certificate.s3.amazonaws.com/image/UC-7cb7adca-ea6b-4e8f-9ae6-f0bdd43a9ca8.jpg))
-101 PRACTICE SQL QUESTIONS: BASIC TO ADVANCED (Microsoft SQL)- [Certificate link]([url](https://mantugroup.udemy.com/certificate/UC-a0f15a2a-bff9-417d-ad79-d50bd0180b3e/))
+
+15 DAYS OF SQL: THE COMPLETE SQL MASTERCLASS 2025 (PostgreSQL)
+101 PRACTICE SQL QUESTIONS: BASIC TO ADVANCED (Microsoft SQL)
 
 The queries cover a wide range of SQL concepts, including:
 
