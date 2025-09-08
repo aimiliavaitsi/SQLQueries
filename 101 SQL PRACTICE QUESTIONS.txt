@@ -1,0 +1,1732 @@
+--Question 1--
+SELECT type_desc, Count(*) as CNT
+FROM sys.objects
+GROUP BY type_desc
+ORDER BY 2 desc
+
+--Question 2--
+SELECT * FROM sys.tables 
+SELECT * FROM sys.schemas 
+SELECT * FROM sys.columns 
+--2A--
+SELECT 
+count(distinct t.name) AS tables_count, 
+count(distinct s.schema_id) AS schema_count, 
+count(distinct c.name) AS columns_count
+FROM sys.tables t
+LEFT JOIN sys.schemas s
+ON t.schema_id = s.schema_id
+LEFT JOIN sys.columns c
+ON t.object_id = c.object_id
+--2B--
+SELECT 
+t.name as TableName, 
+s.schema_id, 
+c.name as ColumnName
+FROM sys.tables t
+LEFT JOIN sys.schemas s
+ON t.schema_id = s.schema_id
+LEFT JOIN sys.columns c
+ON t.object_id = c.object_id
+ORDER BY s.schema_id, t.name, c.name 
+
+--Question 3--
+--3A--
+CREATE DATABASE Edited_AdventureWorks2019
+USE Edited_AdventureWorks2019
+
+--3B--
+SELECT DISTINCT
+	T.name as TableName,
+	C.name as ColumnName,
+	CC.name as CheckConstraint,
+	CC.definition as ConstraintDefinition
+FROM sys.check_constraints CC
+INNER JOIN sys.tables T 
+ON T.object_id = CC.parent_object_id
+LEFT JOIN sys.columns C 
+ON C.column_id = CC.parent_column_id AND C.object_id = CC.parent_object_id
+
+--Question 4--
+SELECT 
+    O.name as FK_Name,
+    S1.name as SchemaName,
+    T1.name as TableName,
+    C1.name as ColumnName,
+    S2.name as ReferencedSchemaName,
+    T2.name as ReferencedTableName,
+    C2.name as ReferencedColumnName
+FROM sys.foreign_key_columns FKC
+INNER JOIN sys.objects O ON O.object_id = FKC.constraint_object_id
+INNER JOIN sys.tables T1 ON T1.object_id = FKC.parent_object_id
+INNER JOIN sys.tables T2 ON T2.object_id = FKC.referenced_object_id
+INNER JOIN sys.columns C1 ON C1.column_id = parent_column_id 
+		             AND C1.object_id = T1.object_id
+INNER JOIN sys.columns C2 ON C2.column_id = referenced_column_id 
+			     AND C2.object_id = T2.object_id
+INNER JOIN sys.schemas S1 ON T1.schema_id = S1.schema_id
+INNER JOIN sys.schemas S2 ON T2.schema_id = S2.schema_id
+
+--Question 6--
+SELECT 
+	s.name as SchemaName,
+	t.name as TableName,
+	c.name as ColumnName,
+	dc.name as DefaultConstraint,
+	dc.definition as DefaultDefinition
+FROM sys.default_constraints dc
+INNER JOIN sys.tables t on t.object_id = dc.parent_object_id
+INNER JOIN sys.schemas s on s.schema_id = dc.schema_id
+INNER JOIN sys.columns c on c.column_id = dc.parent_column_id
+			        AND c.object_id = dc.parent_object_id
+
+--Question 7--
+--7A--
+SELECT 
+t.name as TableName, 
+s.name as SchemaName, 
+c.name as ColumnName
+FROM sys.tables t
+LEFT JOIN sys.schemas s
+ON t.schema_id = s.schema_id
+LEFT JOIN sys.columns c
+ON t.object_id = c.object_id
+WHERE c.name LIKE '%rate%'
+
+--7B--
+SELECT 
+t.name as TableName, 
+s.name as SchemaName, 
+c.name as ColumnName
+FROM sys.tables t
+LEFT JOIN sys.schemas s
+ON t.schema_id = s.schema_id
+LEFT JOIN sys.columns c
+ON t.object_id = c.object_id
+WHERE t.name LIKE '%History%'
+
+--Question 8--
+--8A--
+SELECT DISTINCT 
+DATA_TYPE, 
+count(DATA_TYPE) AS CNT 
+FROM information_schema.columns
+GROUP BY DATA_TYPE
+ORDER BY CNT DESC
+
+--8B--
+select * FROM information_schema.columns
+
+SELECT 
+	CASE WHEN Character_Maximum_Length is not null THEN 'Character' --how to group with case when and have the titles you want in the column--
+	WHEN Numeric_Precision is not null THEN 'Numeric'
+	WHEN Datetime_Precision is not null THEN 'Date'
+	ELSE null
+	END AS 'DataTypeGroup',
+	Count(*) as CNT
+FROM Information_Schema.Columns
+GROUP BY 
+	CASE WHEN Character_Maximum_Length is not null THEN 'Character'
+	WHEN Numeric_Precision is not null THEN 'Numeric'
+	WHEN Datetime_Precision is not null THEN 'Date'
+	ELSE null
+	END 
+ORDER BY count(*) desc
+
+--Question 9--
+select * from information_schema.view_column_usage
+
+SELECT 
+VIEW_NAME, 
+COUNT(DISTINCT TABLE_NAME) AS TABLES_INVOLVED,
+COUNT(DISTINCT COLUMN_NAME) AS COLUMNS_INVOLVED
+FROM information_schema.view_column_usage
+GROUP BY VIEW_NAME
+
+--Question 10--
+Select * From sys.extended_properties
+select * from sys.tables
+select * from sys.columns
+
+SELECT 
+t.name AS TableName,
+c.name AS ColumnName, 
+value 
+FROM sys.extended_properties ext
+INNER JOIN sys.tables t
+ON t.object_id = ext.major_id
+INNER JOIN sys.columns c
+ON c.column_id = ext.minor_id AND c.object_id = ext.major_id
+WHERE class = 1 
+
+--Question 11--
+SELECT * FROM HumanResources.Employee
+SELECT * FROM Person.Person
+--1A--
+SELECT COUNT(*) FROM HumanResources.Employee AS EMPLOYEE_COUNT
+--1B--
+SELECT COUNT(*) FROM HumanResources.Employee AS ACTIVE_EMPLOYEES
+WHERE CurrentFlag = 1
+--1C--
+SELECT FirstName, LastName, JobTitle, PersonType
+FROM HumanResources.Employee E
+LEFT JOIN Person.Person P
+ON E.BusinessEntityID = P.BusinessEntityID
+WHERE PersonType = 'SP' 
+--1D--
+SELECT FirstName, LastName, JobTitle, PersonType
+FROM HumanResources.Employee E
+LEFT JOIN Person.Person P
+ON E.BusinessEntityID = P.BusinessEntityID
+WHERE PersonType = 'SP' AND JobTitle LIKE '%Sales%' 
+
+--Question 12--
+--12A--
+SELECT FirstName + ' ' + LastName AS FullName, JobTitle, HireDate --concatenate in microsoft sql--
+FROM HumanResources.Employee E
+LEFT JOIN Person.Person P
+ON E.BusinessEntityID = P.BusinessEntityID
+WHERE JobTitle = 'Chief Executive Officer'
+--12B--
+Select  
+	CONCAT(p.FirstName,' ',p.LastName) as FullName
+	,JobTitle
+From HumanResources.Employee e
+INNER JOIN Person.Person p
+		on p.BusinessEntityID = e.BusinessEntityID
+Where OrganizationLevel = '1' --who reports to CEO?--
+
+--Question 13--
+select * from HumanResources.EmployeeDepartmentHistory
+select * from HumanResources.Employee
+select * from HumanResources.Department
+
+SELECT FirstName, LastName, JobTitle, HireDate, D.Name, D.GroupName
+FROM HumanResources.Employee E
+LEFT JOIN Person.Person P
+ON E.BusinessEntityID = P.BusinessEntityID
+LEFT JOIN HumanResources.EmployeeDepartmentHistory ED
+ON E.BusinessEntityID = ED.BusinessEntityID
+LEFT JOIN HumanResources.Department D
+ON ED.DepartmentID = D.DepartmentID
+WHERE FirstName = 'John' AND LastName = 'Evans'
+
+--Question 14--
+select * from Purchasing.Vendor
+select * from Purchasing.ProductVendor
+
+--14A--
+SELECT Name, CreditRating 
+FROM Purchasing.Vendor
+WHERE CreditRating = 1
+ORDER BY Name ASC
+--14B--
+SELECT  
+CASE WHEN PreferredVendorStatus = 1 THEN 'Preferred' ELSE 'Not Preferred' END AS VendorStatus, --case when for grouping(!)--
+COUNT(*) AS VENDOR_COUNT
+FROM Purchasing.Vendor
+GROUP BY CASE WHEN PreferredVendorStatus = 1 THEN 'Preferred' ELSE 'Not Preferred' END 
+--14C--
+SELECT 
+CASE WHEN PreferredVendorStatus = '1' THEN 'Preferred' ELSE 'Not Preferred' END AS PreferredStatus, 
+AVG(CAST(CreditRating as decimal)) AS AvgRating
+FROM Purchasing.Vendor
+WHERE ActiveFlag = 1
+GROUP BY CASE WHEN PreferredVendorStatus = '1' THEN 'Preferred' ELSE 'Not Preferred' END
+--14D--
+SELECT 
+COUNT(*) AS VENDORS_ACTIVE_NOTPREFERRED
+FROM Purchasing.Vendor
+WHERE PreferredVendorStatus = 0 AND ActiveFlag = 1 
+
+--Question 15--
+--15A--
+SELECT 
+FirstName, LastName, JobTitle, BirthDate, DATEDIFF(YEAR, BirthDate, GETDATE()) AS AGE --calculate age--
+FROM HumanResources.Employee E
+LEFT JOIN Person.Person P
+ON E.BusinessEntityID = P.BusinessEntityID
+ORDER BY 5 DESC 
+--15B--
+SELECT 
+OrganizationLevel, AVG(DATEDIFF(YEAR, BirthDate, GETDATE())) AS AVG_AGE --calculate age--
+FROM HumanResources.Employee E
+LEFT JOIN Person.Person P
+ON E.BusinessEntityID = P.BusinessEntityID
+WHERE OrganizationLevel IS NOT NULL
+GROUP BY OrganizationLevel 
+--15C--
+Select 
+	OrganizationLevel
+	,Format(Avg(cast(DATEDIFF(Year,BirthDate,'2014-08-15') as decimal)),'N1') as Age --format: for one decimal place--
+	,Ceiling(Avg(cast(DATEDIFF(Year,BirthDate,'2014-08-15') as decimal))) as Age --ceiling: to round up--
+From HumanResources.Employee
+Group by OrganizationLevel
+Order by 2 desc
+
+--Question 16--
+SELECT * FROM Production.Product
+
+SELECT 
+Count(*) as ProductCNT,
+Count(CASE WHEN MakeFlag = 0 THEN ProductID ELSE null END) AS PurchasedProduct,
+Count(CASE WHEN MakeFlag = 1 THEN ProductID ELSE null END) AS MadeInHouse
+FROM Production.Product
+WHERE FinishedGoodsFlag = 1 AND SellEndDate IS NULL
+
+--Question 17--
+select * from Sales.SalesOrderDetail
+
+--17A--
+SELECT 
+CASE WHEN P.MakeFlag = 1 Then 'Manufactured' ELSE 'Purchased' END AS MakeFlag, 
+format(sum(LineTotal), 'C0') AS LineTotal, --CO: Currency with 0 decimal--
+count(distinct SalesOrderID) AS SALES_ORDER_COUNT
+FROM Sales.SalesOrderDetail S
+LEFT JOIN Production.Product P
+ON S.ProductID = P.ProductID
+GROUP BY MakeFlag
+--17B--
+SELECT 
+SalesOrderID,
+format(avg(LineTotal), 'C0') AS LineTotal
+FROM Sales.SalesOrderDetail 
+GROUP BY SalesOrderID
+ORDER BY SalesOrderID
+
+--Question 18--
+select * from Production.TransactionHistory
+select * from Production.TransactionHistoryArchive
+
+--18A--
+Select
+	t.name as TableName
+	,c.name as ColumnName
+	,ep.value as Definitions
+From sys.extended_properties ep
+	INNER JOIN sys.tables t on t.object_id = ep.major_id
+	INNER JOIN sys.columns c on c.object_id = ep.major_id
+							and c.column_id = ep.minor_id
+Where class = 1 
+	  and t.name in ('TransactionHistory')
+--18B--
+SELECT * FROM Production.TransactionHistory
+UNION 
+SELECT * FROM Production.TransactionHistoryArchive
+--18C--
+SELECT
+Cast(MIN(TransactionDate) as Date) as FirstDate,
+Convert(date,MAX(TransactionDate)) as LastDate
+FROM (
+SELECT * FROM Production.TransactionHistoryArchive
+UNION
+SELECT * FROM Production.TransactionHistory) a --subquery in FROM statement(!)--
+--18D--
+SELECT
+TransactionType,
+Cast(MIN(TransactionDate) as Date) as FirstDate,
+Convert(date,MAX(TransactionDate)) as LastDate
+FROM (
+SELECT * FROM Production.TransactionHistoryArchive
+UNION
+SELECT * FROM Production.TransactionHistory) a 
+GROUP BY TransactionType
+
+--Question 19--
+Select 
+	Convert(Date,Min(OrderDate)) as FirstDate
+	,Convert(Date,Max(OrderDate)) as LastDate
+	--,Format(Max(OrderDate),'D') as LastDate
+from Sales.SalesOrderHeader
+
+--Question 20--
+Select 
+	Status
+	,Convert(date,Min(OrderDate)) as FirstDate --matches the pending status
+	,Convert(date,Max(OrderDate)) as LastDate
+from Purchasing.PurchaseOrderHeader
+Group by Status
+
+Select 
+	Convert(date,Min(DueDate)) as FirstDate
+	,Convert(date,Max(DueDate)) as LastDate
+	,Convert(date,Min(StartDate)) as FirstStartDate --matches TransactionHistory
+	,Convert(date,Max(StartDate)) as LastStartDate --matches TransactionHistory
+	,Convert(date,Min(EndDate)) as FirstEndDate
+	,Convert(date,Max(EndDate)) as LastEndDate
+from Production.WorkOrder
+
+--Question 21--
+select * from Person.CountryRegion
+select * from Person.StateProvince
+select * from Sales.SalesTaxRate
+--21A--
+SELECT StateProvinceCode, S.Name AS StateName, S.CountryRegionCode, C.Name AS CountryName, TaxRate
+FROM Person.StateProvince S
+LEFT JOIN Person.CountryRegion C
+ON S.CountryRegionCode = C.CountryRegionCode
+LEFT JOIN Sales.SalesTaxRate Tax
+ON S.StateProvinceID = Tax.StateProvinceID
+ORDER BY TaxRate DESC
+--21B--
+	Select * from Sales.SalesTaxRate	
+	Where StateProvinceID in (
+		Select 
+			sp.StateProvinceID
+		From Person.StateProvince sp
+		  Inner Join Person.CountryRegion cr on cr.CountryRegionCode = sp.CountryRegionCode
+		  Left Join Sales.SalesTaxRate tr on tr.StateProvinceID = sp.StateProvinceID
+		Group by sp.StateProvinceID
+		Having count(*) > 1) --HAVING FUNCTION--
+
+--Question 22--
+--22A--
+select * from Person.Address
+select * from Person.CountryRegion
+select * from Person.StateProvince
+select * from Person.Person
+select * from Person.BusinessEntityAddress
+
+Select 
+	Format(count(p.BusinessEntityID),'N0') as CNT
+from Person.Person p
+Where PersonType = 'IN'
+--22B--
+Select 
+	CR.Name as Country
+	,count(p.BusinessEntityID) as Sort
+	,Format(count(p.BusinessEntityID),'N0') as CNT
+from Person.Person p
+	Inner Join Person.BusinessEntityAddress bea on bea.BusinessEntityID = p.BusinessEntityID
+	Inner Join Person.Address a on a.AddressID = bea.AddressID
+	Inner Join Person.StateProvince sp on sp.StateProvinceID = a.StateProvinceID
+	Inner Join Person.CountryRegion cr on cr.CountryRegionCode = sp.CountryRegionCode
+Where PersonType = 'IN'
+Group by cr.Name
+Order by 2 desc
+--22C SOS--
+Select 
+	cr.Name as Country
+	,Format(count(Distinct p.BusinessEntityID),'N0') as CNT
+	,Format(Cast(count(Distinct p.BusinessEntityID) as float)
+		/(Select count(BusinessEntityID) --you need a subquery to take the count of all customers and not by country--
+		  from Person.Person 
+		  Where PersonType = 'IN'),'P') as '%ofTotal'
+from Person.Person p
+	Inner Join Person.BusinessEntityAddress bea on bea.BusinessEntityID = p.BusinessEntityID
+	Inner Join Person.Address a on a.AddressID = bea.AddressID
+	Inner Join Person.StateProvince sp on sp.StateProvinceID = a.StateProvinceID
+	Inner Join Person.CountryRegion cr on cr.CountryRegionCode = sp.CountryRegionCode
+Where PersonType = 'IN'
+Group by cr.Name
+Order by 2 desc
+
+--Question 23--
+--DECLARE: to store a value in a variable to make use of it later on--
+Declare @TotalRetailCustomers Float =
+	(Select count(BusinessEntityID) 
+ 	 From Person.Person 
+	 Where PersonType = 'IN')
+ 
+Select 
+	cr.Name as Country
+	,count(Distinct p.BusinessEntityID) as Sort
+	,Format(count(Distinct p.BusinessEntityID),'N0') as CNT
+	,Format(Cast(count(Distinct p.BusinessEntityID) as float)
+		/
+			@TotalRetailCustomers,'P') as '%ofTotal'
+ 
+from Person.Person p
+	Inner Join Person.BusinessEntityAddress bea on bea.BusinessEntityID = p.BusinessEntityID
+	Inner Join Person.Address a on a.AddressID = bea.AddressID
+	Inner Join Person.StateProvince sp on sp.StateProvinceID = a.StateProvinceID
+	Inner Join Person.CountryRegion cr on cr.CountryRegionCode = sp.CountryRegionCode
+Where PersonType = 'IN'
+Group by cr.Name
+Order by 2 desc
+
+--Question 25--
+SELECT * FROM  Production.Product
+
+SELECT 
+Product.Name,
+Format(ListPrice,'C0') as ListPrice,
+Format(StandardCost,'C0') as StandardCost,
+Format((ListPrice - StandardCost),'C0') as ProductMargins,
+(ListPrice - StandardCost) as Sort
+FROM Production.Product
+ORDER BY 5 desc
+
+--Question 26--
+select * from Sales.SpecialOfferProduct
+
+Select 
+	so.StartDate
+	,so.EndDate
+	,so.Type
+	,so.Category
+	,so.Description
+	,so.DiscountPct
+	,Count(Distinct p.name) as CNT
+From Production.Product p
+	Inner Join Sales.SpecialOfferProduct sop on sop.ProductID = p.ProductID
+	Inner Join Sales.SpecialOffer so on so.SpecialOfferID = sop.SpecialOfferID
+Where ProductModelID = '19'
+Group by 
+	so.StartDate
+	,so.EndDate
+	,so.Type
+	,so.Category
+	,so.Description
+	,so.DiscountPct
+
+--Question 27--
+select I.ProductID, P.Name, sum(Quantity) AS Inventory, ProductModelID
+from Production.ProductInventory I
+left join Production.Product P
+on I.ProductID = P.ProductID
+where ProductModelID = '19'
+group by I.ProductID, ProductModelID, P.Name
+
+--Question 28--
+select * from Sales.SalesReason
+select * from Sales.SalesOrderDetail
+select * from Sales.SalesOrderHeaderSalesReason
+
+select R.Name, count(D.SalesOrderId) as Count_of_Reason
+from Sales.SalesOrderDetail D
+left join Sales.SalesOrderHeaderSalesReason H
+on D.SalesOrderID = H.SalesOrderID
+left join Sales.SalesReason R
+on H.SalesReasonID = R.SalesReasonID
+group by R.Name
+order by 2 DESC
+--correct answer:--
+Select 
+	sr.Name as Reason
+	,Count(sohsr.SalesOrderID) as Sort
+	,Format(Count(sohsr.SalesOrderID),'#,#') as CNT
+From Sales.SalesOrderHeaderSalesReason sohsr
+	Inner Join Sales.SalesReason sr
+		on sr.SalesReasonID = sohsr.SalesReasonID
+Group by 
+	sr.Name 
+Order by 2 desc
+
+--Question 29--
+With CTE as(
+	Select 
+		soh.SalesOrderID
+		,count(hsr.SalesOrderID) as CNT
+	From Sales.SalesOrderHeader soh
+	  LEFT JOIN Sales.SalesOrderHeaderSalesReason hsr on hsr.SalesOrderID = soh.SalesOrderID
+	Group by soh.SalesOrderID)
+ 
+Select 
+	CNT
+	,Count(CNT) as CNTofSalesOrderIDS
+From CTE
+Group by CNT
+
+--Question 31--
+
+--31A--
+select E.BusinessEntityID, E.JobTitle, E.MaritalStatus, E.Gender, E.HireDate, P.EmailAddress
+from HumanResources.Employee E
+inner join Person.EmailAddress P
+on E.BusinessEntityID = P.BusinessEntityID
+where JobTitle = 'Chief Executive Officer'
+--31B: How to update information(!)--
+select * from Person.EmailAddress
+
+UPDATE Person.EmailAddress
+SET EmailAddress = 'Ken.Sánchez@adventure-works.com'
+WHERE EmailAddress = 'ken0@adventure-works.com'
+
+--Question 34-- 
+SELECT 
+FirstName, 
+LastName, 
+JobTitle, 
+HireDate, 
+RANK() OVER (ORDER BY HireDate) AS Seniority, --RANK(!)--
+DATEDIFF(DAY, HireDate, '2014-03-03') AS DaysEmployed, --DATEDIFF to subtract 2 dates--
+DATEDIFF(MONTH, HireDate, '2014-03-03') AS MonthsEmployed,
+DATEDIFF(YEAR, HireDate, '2014-03-03') AS YearsEmployed
+FROM HumanResources.Employee E
+LEFT JOIN Person.Person P
+ON E.BusinessEntityID = P.BusinessEntityID
+
+--Question 35--
+
+--35A--
+SELECT 
+FirstName, 
+LastName, 
+JobTitle, 
+E.BusinessEntityID,
+HireDate, 
+RANK() OVER (ORDER BY HireDate) AS Seniority, --RANK(!)--
+DATEDIFF(DAY, HireDate, '2014-03-03') AS DaysEmployed, --DATEDIFF to subtract 2 dates--
+DATEDIFF(MONTH, HireDate, '2014-03-03') AS MonthsEmployed,
+DATEDIFF(YEAR, HireDate, '2014-03-03') AS YearsEmployed
+INTO #Temp1 --put it into a temporary table--
+FROM HumanResources.Employee E
+LEFT JOIN Person.Person P
+ON E.BusinessEntityID = P.BusinessEntityID
+
+--35B--
+Select * 
+From #Temp1
+Where BusinessEntityID in ('288','286')
+
+UPDATE #Temp1
+SET YearsEmployed = 0 
+WHERE BusinessEntityID in ('288','286')
+
+--35C--
+SELECT 
+COUNT(*) AS TOTAL_EMP
+FROM #Temp1
+WHERE MonthsEmployed >= 66
+
+--35D--
+SELECT
+CASE WHEN YearsEmployed <= 1 THEN 'Employed Less Than 1 Year' 
+WHEN YearsEmployed <= 3 THEN 'Employed 1-3 Years'
+WHEN YearsEmployed <= 6 THEN 'Employed 4-6'
+ELSE 'Employed Over 6 Years'
+END AS EmploymentCategory, --dont forget to END AS--
+COUNT(*) AS EMP_COUNT --add this column to have the counts--
+FROM #Temp1
+GROUP BY (CASE WHEN YearsEmployed <= 1 THEN 'Employed Less Than 1 Year' --dont forget to group by--
+WHEN YearsEmployed <= 3 THEN 'Employed 1-3 Years'
+WHEN YearsEmployed <= 6 THEN 'Employed 4-6'
+ELSE 'Employed Over 6 Years'
+END)
+
+--Question 36--
+
+--36A--
+SELECT  
+DISTINCT [Group]
+FROM Sales.SalesTerritory
+
+--36B--
+SELECT  
+T.[Group], --you need to use the [] because Group is a reserved keyword--
+FORMAT(SUM(TotalDue), 'C0') AS Total_Due
+FROM Sales.SalesTerritory T
+LEFT JOIN Sales.SalesOrderHeader H
+ON T.TerritoryID = H.TerritoryID
+GROUP BY T.[Group]
+
+--36C--
+Select 
+	distinct st.Name as RegionName
+	,Concat(p.FirstName,' ',p.LastName) as CustomerName
+	,Format(Sum(TotalDue),'C0') as TotalDue
+From Sales.SalesTerritory st
+	Inner Join Sales.SalesOrderHeader soh on soh.TerritoryID = st.TerritoryID
+	Inner Join Sales.Customer c on c.CustomerID = soh.CustomerID
+	Inner Join Person.Person p on p.BusinessEntityID = c.PersonID
+Group by 
+	st.Name
+	,Concat(p.FirstName,' ',p.LastName) 
+
+--36D--
+Select 
+	distinct st.Name as RegionName,
+	Concat(p.FirstName,' ',p.LastName) as CustomerName,
+	Format(Sum(TotalDue),'C0') as TotalDue,
+	ROW_NUMBER () OVER(PARTITION BY st.Name ORDER BY Sum(TotalDue) DESC) AS RowNum
+From Sales.SalesTerritory st
+	Inner Join Sales.SalesOrderHeader soh on soh.TerritoryID = st.TerritoryID
+	Inner Join Sales.Customer c on c.CustomerID = soh.CustomerID
+	Inner Join Person.Person p on p.BusinessEntityID = c.PersonID
+Group by 
+	st.Name,
+	Concat(p.FirstName,' ',p.LastName) 
+
+--Question 37--
+--USING CTE--
+WITH RankedCustomers AS (
+    SELECT 
+        st.Name AS RegionName,
+        CONCAT(p.FirstName, ' ', p.LastName) AS CustomerName,
+        FORMAT(SUM(TotalDue), 'C0') AS TotalDue,
+        ROW_NUMBER() OVER (PARTITION BY st.Name ORDER BY SUM(TotalDue) DESC) AS RowNum
+    FROM Sales.SalesTerritory st
+        INNER JOIN Sales.SalesOrderHeader soh ON soh.TerritoryID = st.TerritoryID
+        INNER JOIN Sales.Customer c ON c.CustomerID = soh.CustomerID
+        INNER JOIN Person.Person p ON p.BusinessEntityID = c.PersonID
+    GROUP BY 
+        st.Name,
+        CONCAT(p.FirstName, ' ', p.LastName)
+)
+SELECT
+    RegionName,
+    CustomerName,
+    TotalDue,
+    RowNum
+FROM RankedCustomers
+WHERE RowNum <= 25
+ORDER BY RegionName, RowNum
+--USING SUBQUERY--
+SELECT *
+FROM (
+    SELECT 
+        st.Name AS RegionName,
+        CONCAT(p.FirstName, ' ', p.LastName) AS CustomerName,
+        FORMAT(SUM(TotalDue), 'C0') AS TotalDue,
+        ROW_NUMBER() OVER (PARTITION BY st.Name ORDER BY SUM(TotalDue) DESC) AS RowNum
+    FROM Sales.SalesTerritory st
+        INNER JOIN Sales.SalesOrderHeader soh ON soh.TerritoryID = st.TerritoryID
+        INNER JOIN Sales.Customer c ON c.CustomerID = soh.CustomerID
+        INNER JOIN Person.Person p ON p.BusinessEntityID = c.PersonID
+    GROUP BY 
+        st.Name,
+        CONCAT(p.FirstName, ' ', p.LastName)
+) AS RankedCustomers
+WHERE RowNum <= 25
+ORDER BY RegionName, RowNum;
+
+--37B--
+Select 
+	RegionName,
+	Format(AVG(TotalDue),'C0') as AvgTotalDue
+From (	
+	Select 
+		distinct st.Name as RegionName
+		,Concat(p.FirstName,' ',p.LastName) as CustomerName
+		,Sum(TotalDue) as TotalDue
+		,ROW_NUMBER() Over(Partition by st.Name Order by Sum(TotalDue) desc) as RowNum
+	From Sales.SalesTerritory st
+		Inner Join Sales.SalesOrderHeader soh on soh.TerritoryID = st.TerritoryID
+		Inner Join Sales.Customer c on c.CustomerID = soh.CustomerID
+		Inner Join Person.Person p on p.BusinessEntityID = c.PersonID
+	Group by 
+		st.Name
+		,Concat(p.FirstName,' ',p.LastName))a
+Group by 
+	RegionName
+Order by 2 desc
+
+--Question 38--
+select * from Sales.SalesOrderHeader
+
+--38A--
+select 
+format(sum(Freight), 'N0') as total_freight
+from Sales.SalesOrderHeader
+
+--38B--
+select 
+YEAR(ShipDate) as ShipYear,
+format(sum(Freight), 'N0') as total_freight
+from Sales.SalesOrderHeader
+group by YEAR(ShipDate)
+order by YEAR(ShipDate), total_freight DESC
+
+--38C--
+select 
+YEAR(ShipDate) as ShipYear,
+SalesOrderID,
+format(avg(Freight), 'N0') as avg_freight
+from Sales.SalesOrderHeader
+group by YEAR(ShipDate), SalesOrderID
+order by YEAR(ShipDate), avg_freight DESC
+
+--Question 40--
+
+--40A--
+select 
+YEAR(ShipDate) as ShipYear,
+MONTH(ShipDate) as ShipMonth,
+DateName(month,ShipDate) as ShipMonthName,
+format(sum(Freight), 'N0') as total_freight,
+format(avg(Freight), 'N0') as avg_freight
+from Sales.SalesOrderHeader
+group by YEAR(ShipDate), MONTH(ShipDate), DateName(month,ShipDate)
+order by YEAR(ShipDate), MONTH(ShipDate), DateName(month,ShipDate), total_freight DESC
+
+--40b--
+Select * 
+	,Format(Sum(TotalFreight) Over (Order by ShipYear,ShipMonth),'C0') as RunningTotal
+From(
+    Select 
+	Year(ShipDate) as ShipYear
+	,Month(ShipDate) as ShipMonth
+	,DateName(month,ShipDate) as 'MonthName'
+	,Sum(Freight) as TotalFreight 
+	,Avg(Freight) as AvgFreight
+    From Sales.SalesOrderHeader
+    Group by 
+    	Year(ShipDate)
+	,Month(ShipDate)
+	,DateName(month,ShipDate))a
+
+--Question 41--
+Select 
+    soh.SalesOrderID
+    ,CONCAT(cp.FirstName,' ',cp.LastName) as 'CustomerName'
+    ,Case When cp.PersonType = 'IN' Then 'Inividual Customer'
+	  When cp.PersonType = 'SC' Then 'Store Contact'
+	  Else Null End as 'PersonType'
+    ,Case When CONCAT(sp.FirstName,' ',sp.LastName) = ' ' 
+	  Then 'No Sales Person'
+	  Else CONCAT(sp.FirstName,' ',sp.LastName) End  as 'SalesPerson'
+    ,OrderDate
+    ,Sum(OrderQTY) as ProductQty
+From Sales.SalesOrderHeader soh
+    Inner Join Sales.SalesOrderDetail sod on soh.SalesOrderID = sod.SalesOrderID
+    Inner Join Sales.Customer c on c.CustomerID = soh.CustomerID
+    Inner Join Person.Person cp on cp.BusinessEntityID = c.PersonID
+    Left Join Person.Person sp on sp.BusinessEntityID = soh.SalesPersonID
+Group by 
+    soh.SalesOrderID
+    ,CONCAT(cp.FirstName,' ',cp.LastName)
+    ,cp.PersonType
+    ,OrderDate
+    ,CONCAT(sp.FirstName,' ',sp.LastName)
+
+--Question 42--
+WITH CTE AS (
+SELECT 
+    soh.SalesOrderID,
+    CONCAT(
+        cp.FirstName, ' ', cp.LastName, ' is a(n) ',
+        CASE 
+            WHEN cp.PersonType = 'IN' THEN 'Individual Customer'
+            WHEN cp.PersonType = 'SC' THEN 'Store Contact'
+            ELSE 'Unknown'
+        END,
+        ' and purchased ',
+        CAST(SUM(OrderQTY) AS VARCHAR(10)), ' Product(s) from ',
+        CASE 
+            WHEN CONCAT(sp.FirstName, ' ', sp.LastName) = ' ' THEN 'No Sales Person'
+            ELSE CONCAT(sp.FirstName, ' ', sp.LastName)
+        END,
+        ' on ',
+        CONVERT(VARCHAR(10), OrderDate, 120)
+    ) AS Comment
+FROM Sales.SalesOrderHeader soh
+    INNER JOIN Sales.SalesOrderDetail sod ON soh.SalesOrderID = sod.SalesOrderID
+    INNER JOIN Sales.Customer c ON c.CustomerID = soh.CustomerID
+    INNER JOIN Person.Person cp ON cp.BusinessEntityID = c.PersonID
+    LEFT JOIN Person.Person sp ON sp.BusinessEntityID = soh.SalesPersonID
+GROUP BY 
+    soh.SalesOrderID,
+    cp.FirstName,
+    cp.LastName,
+    cp.PersonType,
+    OrderDate,
+    sp.FirstName,
+    sp.LastName )
+
+--Question 43--
+select * from Sales.SalesPersonQuotaHistory
+select * from Sales.SalesPerson
+--43A--
+select 
+count(*) as count
+from 
+(select 
+BusinessEntityID 
+from
+Sales.SalesPerson
+where SalesYTD>SalesQuota) as t
+--43B--
+select 
+count(*) as count 
+from
+Sales.SalesPerson
+where 
+SalesYTD> 
+  (select format(avg(SalesYTD), 'N0') from Sales.SalesPerson)
+  
+--Question 44--
+CREATE PROCEDURE StoredProcedure
+AS
+BEGIN 
+ SELECT 
+ BusinessEntityID,
+ Format(CommissionPct,'p') as CommissionPct,
+ Format(SalesYTD,'$#,#') as SalesYTD,
+ Format((CommissionPct * SalesYTD),'$#,#') as Commission,
+ Format(Bonus,'$#,#') as Bonus
+ FROM Sales.SalesPerson
+ END
+
+EXEC StoredProcedure
+
+Drop Procedure StoredProcedure
+
+--Question 45--
+Create Procedure Sales_Report_YTD
+	@BusinessEntityID int
+as (
+	Select 
+		BusinessEntityID
+		,Format(CommissionPct,'p') as CommissionPct
+		,Format(SalesYTD,'$#,#') as SalesYTD
+		,Format((CommissionPct * SalesYTD),'$#,#') as Commission
+		,Format(Bonus,'$#,#') as Bonus
+	From Sales.SalesPerson
+	Where BusinessEntityID = @BusinessEntityID)
+	
+Exec Sales_Report_YTD @BusinessEntityID = '279'
+
+Drop Procedure Sales_Report_YTD
+
+--Question 46--
+select * from Purchasing.Vendor
+--46A&B--
+Select
+CASE WHEN CreditRating = 1 THEN 'Superior'
+WHEN CreditRating = 2 THEN 'Excellent'
+WHEN CreditRating = 3 THEN 'Above Average'
+WHEN CreditRating = 4 THEN 'Average'
+ELSE 'Below Average'
+END AS CreditRatingCategory,
+Count(name) as CNT
+From Purchasing.Vendor
+Group by CreditRating
+--46C--
+--CHOOSE FUNCTION: The CHOOSE function in SQL Server returns an item from a list, based on its position (index). It s useful for mapping numeric values to descriptive labels.--
+Select
+Choose(CreditRating
+  ,'Superior'
+  ,'Excellent'
+  ,'Above Average'
+  ,'Average'
+  ,'Below Average') as CreditRating
+,Count(name) as CNT
+From Purchasing.Vendor
+Group by CreditRating
+
+--Question 47--
+--CASE WHEN--
+Select
+CASE WHEN CreditRating = 1 THEN 'Approved'
+ELSE 'Not Approved'
+END AS CreditRatingApprovals,
+Count(name) as CNT
+From Purchasing.Vendor
+Group by (CASE WHEN CreditRating = 1 THEN 'Approved' ELSE 'Not Approved' END)
+
+--CHOOSE--
+Select
+CHOOSE(CreditRating,
+'Approved', 
+'Not Approved', 
+'Not Approved',
+'Not Approved',
+'Not Approved') AS CreditRatingApprovals,
+Count(name) as CNT
+From Purchasing.Vendor
+Group by (CHOOSE(CreditRating,
+'Approved', 
+'Not Approved', 
+'Not Approved',
+'Not Approved',
+'Not Approved'))
+
+--IIF--
+Select  
+	IIF(CreditRating = 1
+		,'Approved'
+		,'Not Approved') as CreditRating
+	,Count(name) as CNT
+From Purchasing.Vendor
+Group by 
+	IIF(CreditRating = 1
+		,'Approved'
+		,'Not Approved')
+
+--Question 51--
+Select 
+    t.name as TableName
+    ,Max(p.rows) as RowCNT
+    ,Sum(u.total_pages * 8) as TotalAllocated_kb
+    ,Sum(u.used_pages * 8) as Used_kb
+    ,(Sum(u.total_pages * 8) - Sum(u.used_pages * 8)) as Unused_kb
+From sys.allocation_units u
+    Inner Join sys.partitions p on p.hobt_id = u.container_id
+    Inner Join sys.tables t on t.object_id = p.object_id
+Group by t.name
+
+--Question 52--
+Create View vDatabaseAllocation
+As 
+(SELECT 
+    t.name as TableName
+    ,Max(p.rows) as RowCNT
+    ,Sum(u.total_pages) * 8 as TotalAllocated_kb
+    ,Sum(u.used_pages) * 8 as Used_kb
+    ,(Sum(u.total_pages) * 8) - (Sum(u.used_pages) * 8) as Unused_kb
+    ,Case When Cast((Sum(u.total_pages) * 8) - (Sum(u.used_pages) * 8) as decimal)
+        /nullif(Sum(u.total_pages)*8,0) < .10
+      Then 1 Else 0 End as Flg
+FROM sys.allocation_units AS u
+    Inner Join sys.partitions AS p ON u.container_id = p.hobt_id
+    Inner Join sys.tables AS t ON p.object_id = t.object_id
+GROUP BY t.name)
+
+select * from vDatabaseAllocation
+
+--Question 54--
+Select 
+    Format(Sum(TotalDue)
+      / Count(Distinct OrderDate),'C0') as AvgTotalDue
+From Sales.SalesOrderHeader
+Where (DATEPART(MM, OrderDate) = 7)
+	AND (DATEPART(DD, OrderDate) = 4)
+
+--Quetion 55--
+SELECT 
+    YEAR(DueDate) AS Year_Date,
+    DATENAME(weekday, DueDate) AS DayOfWeek_Date,
+    FORMAT(SUM(TotalDue)/ COUNT(DISTINCT OrderDate),'C0') AS AvgTotalDue
+INTO #Temp1
+FROM Sales.SalesOrderHeader
+WHERE (DATEPART(MM, OrderDate) = 7)
+  AND (DATEPART(DD, OrderDate) = 4)
+GROUP BY YEAR(DueDate), DATENAME(weekday, DueDate)
+
+SELECT * FROM #Temp1;
+
+--56--
+SELECT 
+    DATENAME(weekday, DueDate) AS Day_Of_Week,
+    COUNT(Distinct OrderDate) AS Day_Count,
+    FORMAT(SUM(TotalDue), 'C0') AS Total_Due,
+    FORMAT(SUM(TotalDue)/ COUNT(DISTINCT OrderDate),'C0') AS AvgTotalDue
+INTO #Temp4
+FROM Sales.SalesOrderHeader
+GROUP BY DATENAME(weekday, DueDate)
+
+SELECT * FROM #Temp4;
+
+--Question 58--
+Select * From Sales.vSalesPersonSalesByFiscalYears
+
+SELECT 
+	b.SalesPersonID
+	,b.FullName
+	,b.JobTitle
+	,b.SalesTerritory
+	,Format(b.[2012],'C0') as [2012]
+	,Format(b.[2013],'C0') as [2013]
+	,Format(b.[2014],'C0') as [2014]
+FROM (
+    Select 
+        soh.SalesPersonID
+        ,Concat(p.FirstName,COALESCE (' ' + p.MiddleName, ''),' ',p.LastName) as FullName
+        ,e.JobTitle
+        ,st.[Name] AS SalesTerritory
+        ,soh.SubTotal
+        ,Year(DateAdd(m, 6, soh.OrderDate)) AS FiscalYear 
+    From Sales.SalesPerson sp 
+        Inner Join Sales.SalesOrderHeader soh 
+			on sp.BusinessEntityID = soh.SalesPersonID
+        Inner Join Sales.SalesTerritory st 
+			on sp.TerritoryID = st.TerritoryID 
+        Inner Join HumanResources.Employee e 
+			on soh.SalesPersonID = e.BusinessEntityID 
+		Inner Join Person.Person p
+			on p.BusinessEntityID = sp.BusinessEntityID
+		) as a
+	PIVOT --pivot function!--
+	(
+		SUM(SubTotal) 
+		FOR FiscalYear 
+		IN ([2012], [2013], [2014])
+	) AS b
+
+--Question 59--
+Select 
+    FullName
+    ,Format([Road Bikes],'C0') as [Road Bikes]
+    ,Format([Mountain Bikes],'C0') as [Mountain Bikes]
+    ,Format([Touring Bikes],'C0') as [Touring Bikes]
+From(
+    Select 
+	Concat(pr.FirstName,COALESCE (' ' + pr.MiddleName, ''),' ',pr.LastName) as FullName
+    	,psc.Name as ProdSubCat
+	,Linetotal
+    From Sales.SalesOrderDetail sod
+	Inner Join Production.Product p on p.ProductID = sod.ProductID
+	Inner Join Production.ProductSubcategory psc on psc.ProductSubcategoryID = p.ProductSubcategoryID
+	Inner Join Sales.SalesOrderHeader soh on soh.SalesOrderID = sod.SalesOrderID
+	Inner Join Person.Person pr on pr.BusinessEntityID = soh.SalesPersonID 
+    Where Year(OrderDate) = '2013') a
+Pivot (
+	Sum(LineTotal)
+	For ProdSubCat in ([Road Bikes],[Mountain Bikes],[Touring Bikes]))b
+Order by ([Road Bikes]+[Mountain Bikes]+[Touring Bikes]) desc
+
+--Question 61, 62--
+select * from Person.Person
+select * from Sales.SalesTerritory
+select * from Sales.SalesPerson
+
+SELECT 
+SP.BusinessEntityID, 
+FirstName + MiddleName + LastName AS Full_Name,
+ISNULL(ST.Name, 'No Territory') AS Territory_Name,
+FORMAT(SP.SalesYTD, 'C0') AS Sales_YTD,
+RANK() OVER(ORDER BY SP.SalesYTD) AS Rank_YTD --rank all people--
+FROM Sales.SalesPerson SP
+INNER JOIN Person.Person PP
+ON SP.BusinessEntityID = PP.BusinessEntityID
+LEFT JOIN Sales.SalesTerritory ST
+ON SP.TerritoryID = ST.TerritoryID
+ORDER BY Rank_YTD 
+
+SELECT 
+SP.BusinessEntityID, 
+FirstName + MiddleName + LastName AS Full_Name,
+ISNULL(ST.Name, 'No Territory') AS Territory_Name,
+FORMAT(SP.SalesYTD, 'C0') AS Sales_YTD,
+RANK() OVER(PARTITION BY ST.Name ORDER BY SP.SalesYTD) AS Rank_YTD --rank between groups--
+FROM Sales.SalesPerson SP
+INNER JOIN Person.Person PP
+ON SP.BusinessEntityID = PP.BusinessEntityID
+LEFT JOIN Sales.SalesTerritory ST
+ON SP.TerritoryID = ST.TerritoryID
+ORDER BY ST.Name, Rank_YTD
+
+SELECT 
+SP.BusinessEntityID, 
+FirstName + MiddleName + LastName AS Full_Name,
+ISNULL(ST.Name, 'No Territory') AS Territory_Name,
+FORMAT(SP.SalesYTD, 'C0') AS Sales_YTD,
+Format(PERCENT_RANK() Over(Order by sp.SalesYTD asc),'P0') as TotalPercentRank --rank percentage--
+FROM Sales.SalesPerson SP
+INNER JOIN Person.Person PP
+ON SP.BusinessEntityID = PP.BusinessEntityID
+LEFT JOIN Sales.SalesTerritory ST
+ON SP.TerritoryID = ST.TerritoryID
+ORDER BY TotalPercentRank
+
+--Question 65--
+SELECT 
+BusinessEntityID,
+CONCAT(FirstName,' ',LastName) as FullName,
+COUNT(*) AS NAME_COUNT
+FROM HumanResources.vEmployeeDepartmentHistory 
+GROUP BY BusinessEntityID, CONCAT(FirstName,' ',LastName)
+HAVING COUNT(*) > 1
+
+--Question 71--
+select * from [Person].[EmailAddress]
+
+--71A--
+Select 
+    BusinessEntityID
+    ,EmailAddress
+    ,CHARINDEX('@',EmailAddress) CharCNT
+    ,Left(EmailAddress,CHARINDEX('@',EmailAddress)-1) Username
+From Person.EmailAddress
+Order by 1 asc
+
+--71B--
+Select * 
+From(
+    Select 
+        BusinessEntityID
+	,EmailAddress
+	,CHARINDEX('@',EmailAddress) CharCNT
+	,Left(EmailAddress,CHARINDEX('@',EmailAddress)-1) Username
+    From Person.EmailAddress) a 
+Group by 
+    BusinessEntityID
+    ,EmailAddress
+    ,CharCNT
+    ,UserName
+Having Count(Distinct Username) > 1
+
+--71C--
+Select 
+    ea.BusinessEntityID
+    ,EmailAddress
+    ,CHARINDEX('@',EmailAddress)
+    ,Left(EmailAddress,CHARINDEX('@',EmailAddress)-1) Username
+    ,Concat(
+	Left(FirstName,2)
+	,'.'
+	,Right(LastName,2) 
+	,'.'
+	,Left(NewID(),5)) as TempPassword
+From Person.EmailAddress ea
+    Inner Join Person.Person p on p.BusinessEntityID = ea.BusinessEntityID
+Order by 1 asc
+
+--Question 72--
+--72A-- 
+Select 
+    BusinessEntityID
+    ,EmailAddress
+    ,CHARINDEX('@',EmailAddress) CharCNT
+    ,Left(EmailAddress,CHARINDEX('@',EmailAddress)-1) Username
+Into Person.Username
+From Person.EmailAddress
+Order by 1 asc
+ 
+--72B-- 
+Select * 
+    ,Len(Username) as CharLen
+From person.Username
+Order by 1 asc
+ 
+--72C-- 
+Select * 
+    ,Len(Username) as CharLen
+    ,Case When Len(Username) = 2 Then Username +'123'
+	  When Len(Username) = 3 Then Username +'12'
+	  When Len(Username) = 4 Then Username +'1'
+	  Else Username End 
+From person.Username
+Order by 5 asc
+ 
+Update Person.Username
+Set Username = Case When Len(Username) = 2 Then Username +'123'
+		    When Len(Username) = 3 Then Username +'12'
+		    When Len(Username) = 4 Then Username +'1'
+		    Else Username End 
+ 
+Select * From Person.Username
+ 
+--72D--
+Truncate Table Person.Username
+--72E--
+Drop Table person.Username
+
+--Question 73--
+Select Distinct
+    Concat(p.FirstName,' ',p.LastName) as FullName
+    ,JobTitle
+    ,cr.Name
+    ,sp.Name
+    ,a.City
+    ,a.PostalCode
+    ,a.AddressLine1
+    ,a.AddressLine2
+From HumanResources.Employee e
+	INNER JOIN Person.Person p
+		on p.BusinessEntityID = e.BusinessEntityID
+	INNER JOIN Person.BusinessEntityAddress bea
+		on bea.BusinessEntityID = p.BusinessEntityID
+	INNER JOIN Person.Address a
+		on a.AddressID = bea.AddressID
+	INNER JOIN Person.StateProvince sp
+		on sp.StateProvinceID = a.StateProvinceID
+	INNER JOIN Person.CountryRegion cr
+		on cr.CountryRegionCode = sp.CountryRegionCode
+
+--Question 74--
+Select 
+    ProductID
+    ,Name as ProductName
+    ,Weight
+    ,WeightUnitMeasureCode
+    ,Case when WeightUnitMeasureCode = 'LB'
+          then (Weight*453.592) 
+	  Else Weight End as Grams
+From Production.Product
+Order by 5 desc
+
+--Question 75--
+
+--75A--
+Select 
+    p.Name as ProductName
+    ,P.SafetyStockLevel
+    ,ReorderPoint
+    ,Sum(I.Quantity) as Quantity
+    ,Case When Sum(I.Quantity) < SafetyStockLevel 
+	  Then 'Below'
+	  Else 'Above' End as StocklevelFlg
+    ,Case When Sum(I.Quantity) < ReorderPoint 
+	  Then 'Below'
+	  Else 'Above' End as ReorderFlg
+INTO #Temp1
+from Production.ProductInventory I
+    Inner JOin Production.Product p on p.ProductID = i.ProductID
+Group by 
+	p.Name
+	,P.SafetyStockLevel
+	,ReorderPoint
+ 
+--75B--
+Select Count(ProductID) as ProductCNT
+From Production.Product
+ 
+--75C--
+Select Count(Distinct ProductID) as ProductCNT
+From Production.ProductInventory
+ 
+--75D--
+Select Count(ProductID) as ProductCNT
+From Production.Product
+Where ProductID not in
+	(Select Distinct ProductID
+	From Production.ProductInventory)
+ 
+--75E--
+Select
+    Count(*) as CNT
+From #Temp1
+Where StocklevelFlg = 'Below'
+ 
+--75F--
+Select
+    Count(*) as CNT
+From #Temp1
+Where ReorderFlg = 'Below'
+
+--Question 79--
+--79A--
+Select 
+    sr.Name
+    ,Sum(ScrappedQTY) as ScrappedQty
+From Production.WorkOrder wo
+    Inner Join Production.ScrapReason sr on sr.ScrapReasonID = wo.ScrapReasonID
+Group by sr.Name
+Order by 2 desc
+ 
+--79B--
+Select 
+    P.Name
+    ,Sum(ScrappedQty) as ScrappedQty
+From Production.Product p 
+INNER JOIN Production.WorkOrder wo ON wo.ProductID = p.ProductID
+INNER JOIN Production.ScrapReason sr ON sr.ScrapReasonID = wo.ScrapReasonID
+Group by P.Name
+ 
+--79C-- 
+Select 
+    P.Name
+    ,Sum(ScrappedQty) as ScrappedQty
+From Production.Product p 
+INNER JOIN Production.WorkOrder wo ON wo.ProductID = p.ProductID
+INNER JOIN Production.ScrapReason sr ON sr.ScrapReasonID = wo.ScrapReasonID
+Group by rollup(P.Name)
+
+--Question 80--
+Select 
+    Case When PersonType = 'IN' Then 'Individual Customer'
+         When PersonType = 'EM' Then 'Employee'
+	 When PersonType = 'SP' Then 'Sales Person'
+	 When PersonType = 'SC' Then 'Store Contact'
+	 When PersonType = 'VC' Then 'Vendor Contact'
+	 When PersonType = 'GC' Then 'General Contact'
+	 Else null End as PersonTypeDesc
+    ,Format(Count(*),'N0') as SPCNT
+From Person.Person P
+    Left Join HumanResources.Employee E 
+	on P.BusinessEntityID = E.BusinessEntityID
+    Left Join Sales.Customer C 
+	on C.PersonID = P.BusinessEntityID
+Group by PersonType
+
+--Question 81--
+Select 
+    DATEDIFF(day,OrderDate,ShipDate) [Days]
+    ,count(SalesOrderID) CNT
+From Sales.SalesOrderHeader
+Group by DATEDIFF(day,OrderDate,ShipDate)
+
+--Question 82--
+--82A-- 
+Select top 1
+    BusinessEntityID
+From Sales.SalesPerson
+Order by SalesYTD desc
+ 
+--82B-- 
+Declare @TopSalesPersonID int
+Set @TopSalesPersonID = (Select top 1
+			    BusinessEntityID
+			 From Sales.SalesPerson
+		         Order by SalesYTD desc)
+ 
+--82C--
+Declare @CurrentYear int
+Set @CurrentYear = (Select top 1 
+			Year(OrderDate)
+		    From Sales.SalesOrderHeader
+		    Order by 1 desc)
+ 
+--82D--
+Select top 10		
+	p.Name as ProductName
+	,Format(Sum(SubTotal),'C0') as SubTotal
+From Sales.SalesOrderHeader soh
+    Inner Join Sales.SalesOrderDetail sod
+	on soh.SalesOrderID = sod.SalesOrderID
+    Inner Join Production.Product p 
+	on p.ProductID = sod.ProductID
+Where SalesPersonID = @TopSalesPersonID
+	and Year(OrderDate) = @CurrentYear
+Group by p.Name
+Order by Sum(SubTotal) desc
+
+--Question 83--
+Declare @SalesPersonID int
+Set @SalesPersonID = (Select
+		           BusinessEntityID
+		      From(
+		 	 Select
+		             BusinessEntityID
+			    ,SalesYTD
+			    ,RANK() Over(Order by SalesYTD desc) as 'Rank'
+			 From Sales.SalesPerson) a
+			 Where [Rank] = 3)
+ 
+Declare @CurrentYear int
+Set @CurrentYear = (Select top 1 
+			Year(OrderDate)
+		    From Sales.SalesOrderHeader
+		    order by 1 desc)
+ 
+Select top 10		
+	p.Name as ProductName
+	,Format(Sum(SubTotal),'C0') as SubTotal
+From Sales.SalesOrderHeader soh
+	Inner Join Sales.SalesOrderDetail sod
+		on soh.SalesOrderID = sod.SalesOrderID
+	Inner Join Production.Product p 
+		on p.ProductID = sod.ProductID
+Where SalesPersonID = @SalesPersonID
+	and Year(OrderDate) = @CurrentYear
+Group by p.Name
+Order by Sum(SubTotal) desc
+
+--Question 84--
+--84A--
+Select 
+    Count(CardNumber) as CardCNT
+From Sales.CreditCard 
+ 
+--84B-- 
+Select 
+    p.PersonType
+    ,Count(CardNumber) as CardCNT
+From Sales.CreditCard cc
+    Inner Join Sales.PersonCreditCard pcc on pcc.CreditCardID = cc.CreditCardID	
+    Inner Join Person.Person p on p.BusinessEntityID = pcc.BusinessEntityID
+Group by p.PersonType
+ 
+--84C-- 
+Select 
+    PersonType
+    ,Count(Case When Concat(ExpYear,Right(100+ExpMonth,2)) >= 200509
+        	  Then CardNumber Else Null End) as ValidCardCNT
+    ,Count(Case When Concat(ExpYear,Right(100+ExpMonth,2)) < 200509
+		  Then CardNumber Else Null End) as ExpiredCardCNT
+From Sales.CreditCard cc
+    Inner Join Sales.PersonCreditCard pcc on pcc.CreditCardID = cc.CreditCardID
+    Inner Join Person.Person p on p.BusinessEntityID = pcc.BusinessEntityID
+Group by PersonType 
+
+--Question 85--
+Select 
+    Concat(p.FirstName,COALESCE (' ' + p.MiddleName, ''),' ',p.LastName) as FullName
+    ,Right(cc.CardNumber,4) as CCNumber
+    ,PersonType
+    ,isnull(s.Name,'Retail Customer') as StoreName
+    ,Cast(CONCAT(ExpYear,RIGHT(100+ExpMonth,2))+'01' as date) as ExpirationDate
+    ,ea.EmailAddress
+    ,pp.PhoneNumber
+From Sales.CreditCard cc
+    Inner Join Sales.PersonCreditCard pcc on pcc.CreditCardID = cc.CreditCardID
+    Inner Join Person.Person p on p.BusinessEntityID = pcc.BusinessEntityID
+    Left Join Sales.Customer c on c.PersonID = p.BusinessEntityID
+    Left Join Sales.Store s on s.BusinessEntityID = c.StoreID
+    Inner Join Person.PersonPhone pp on pp.BusinessEntityID = p.BusinessEntityID
+    Inner Join Person.EmailAddress ea on ea.BusinessEntityID = p.BusinessEntityID
+Where CONCAT(ExpYear,RIGHT(100+ExpMonth,2)) <= 200509
+
+--Question 86--
+Select 
+    d.Name as 'Department'
+    ,s.Name as 'Shift'
+    ,Left(s.StartTime,5) as StartTime
+    ,Format(s.EndTime,'hh\:mm') as EndTime
+From HumanResources.Department d
+    Cross Join HumanResources.shift s 
+Where Concat(s.ShiftID,d.DepartmentID) in 
+                    (Select Concat(ShiftID,DepartmentID)
+                    From HumanResources.EmployeeDepartmentHistory)
+
+--Question 87--
+Select 
+    ProductID
+    ,Count(RowNum) as PriceChanges		
+From(
+    Select 
+        ROW_NUMBER() OVER (Partition by p.ProductID Order by ph.StartDate) as RowNum
+	,p.ProductID
+    From Production.Product p
+	LEFT JOIN Production.ProductListPriceHistory ph
+		on p.ProductID = ph.ProductID) a
+Group by ProductID
+Order by 2 desc
+
+--Question 88--
+Select 
+    soh.SalesOrderID
+    ,Concat(p.FirstName,' ',p.LastName) as FullName
+    ,a.AddressLine1
+    ,a.AddressLine2
+    ,soh.SubTotal
+From Sales.SalesOrderHeader soh
+    INNER JOIN Sales.Customer c 
+	on c.CustomerID = soh.CustomerID
+    INNER JOIN Person.Person p
+	on p.BusinessEntityID = c.PersonID
+    INNER JOIN Purchasing.ShipMethod sm
+	on sm.ShipMethodID = soh.ShipMethodID
+    INNER JOIN Person.BusinessEntityAddress bea
+	on bea.BusinessEntityID = p.BusinessEntityID
+    INNER JOIN Person.Address a
+	on a.AddressID = bea.AddressID
+    INNER JOIN Person.StateProvince sp
+	on sp.StateProvinceID = a.StateProvinceID
+Where Shipdate between '2014-03-01' and '2014-04-30'
+	and sm.Name = 'XRQ - TRUCK GROUND'
+	and City = 'Beverly Hills'
+	and sp.Name = 'California'
+Order by 5 desc
+
+--Question 89--
+--89A-- 
+Select 
+    p.Name as ProductName
+    ,isnull(d.FileName,'No File on Record') as FileName
+    ,d.Status
+    ,d.Revision
+    ,Concat(FirstName,' ',LastName) as EmployeeName
+    ,e.JobTitle
+Into #Temp1 
+From Production.Product p
+    Left Join Production.ProductDocument pd on pd.ProductID = p.ProductID
+    Left Join Production.Document d on d.DocumentNode = pd.DocumentNode
+    Left Join HumanResources.Employee e on e.BusinessEntityID = d.Owner
+    Left Join Person.Person pr on pr.BusinessEntityID = e.BusinessEntityID
+ 
+--89B-- 
+Select 
+    Count(ProductName)
+From #Temp1
+Where FileName <> 'No File on Record'
+ 
+--89C-- 
+Select 
+    ProductName
+From #Temp1
+Where FileName <> 'No File on Record'
+Group by ProductName
+Having Count(*) > 1 
+ 
+--89D-- 
+Select 
+    EmployeeName
+    ,Avg(Cast(Revision as Decimal(8,2))) as AvgRevisions
+From #Temp1
+Where FileName <> 'No File on Record'
+Group by EmployeeName
+
+--Question 90--
+Select 
+    isnull(GroupName,'Grand Total') as Department_GroupName
+    ,Count(Case When s.Name = 'Day' Then e.BusinessEntityID
+		else null End) as Day_EmpCNT
+    ,Count(Case When s.Name = 'Evening' Then e.BusinessEntityID
+		else null End) as Evening_EmpCNT
+    ,Count(Case When s.Name = 'Night' Then e.BusinessEntityID
+		else null End) as Night_EmpCNT
+    ,Count(e.BusinessEntityID) as Total_EmpCNT
+From HumanResources.Employee e
+    Inner Join HumanResources.EmployeeDepartmentHistory edh
+		on edh.BusinessEntityID = e.BusinessEntityID
+    Inner Join HumanResources.Shift s
+		on s.ShiftID = edh.ShiftID
+    Inner Join HumanResources.Department d
+		on d.DepartmentID = edh.DepartmentID
+Where enddate is null
+Group by Rollup(GroupName)
+
+--Question 91--
+
+--91A--
+SELECT 
+    Concat(FirstName,' ',LastName) as FullName
+    ,e.BirthDate
+    ,DATEDIFF(Year,e.BirthDate,GetDate()) Age
+FROM   HumanResources.Employee E
+    CROSS JOIN Person.Person P
+WHERE  P.BusinessEntityID = E.BusinessEntityID
+ 
+--91B-- 
+SELECT Concat(FirstName,' ',LastName) as FullName
+    ,e.BirthDate     
+    ,DATEDIFF(Year,e.BirthDate,GetDate()) Age
+FROM   HumanResources.Employee E
+    CROSS JOIN Person.Person P
+WHERE  P.BusinessEntityID = E.BusinessEntityID
+	and Month(e.Birthdate) = Month(GetDate())
+	and Day(e.Birthdate) = Day(GetDate())
+
+--Question 93--
+--93A--
+ Select 
+    Concat(FirstName,' ',LastName) as FullName
+    ,soh.AccountNumber
+    ,PhoneNumber
+    ,OrderDate
+    ,p.Name as ProductName
+    ,Sum(LineTotal) as LineTotal
+ From Sales.SalesOrderHeader soh
+    Inner Join Sales.SalesOrderDetail sod on sod.SalesOrderID = soh.SalesOrderID
+    Inner Join Production.Product p on p.ProductID = sod.ProductID
+    Inner Join Sales.Customer c on c.CustomerID = soh.CustomerID
+    Inner Join Person.Person pr on pr.BusinessEntityID = c.PersonID
+    Inner Join Person.PersonPhone pp on pp.BusinessEntityID = pr.BusinessEntityID
+ Group by 
+    Concat(FirstName,' ',LastName)
+    ,soh.AccountNumber
+    ,PhoneNumber
+    ,OrderDate
+    ,p.Name
+ 
+--93B-- 
+Create Procedure CustomerPurchaseHistory
+	@PhoneNumber varchar(25)
+	,@AccountNumber nvarchar(15)
+as (
+	 Select 
+		Concat(FirstName,' ',LastName) as FullName
+		,soh.AccountNumber
+		,PhoneNumber
+		,OrderDate
+		,p.Name as ProductName
+		,Sum(LineTotal) as LineTotal
+	 From Sales.SalesOrderHeader soh
+		Inner Join Sales.SalesOrderDetail sod on sod.SalesOrderID = soh.SalesOrderID
+		Inner Join Production.Product p on p.ProductID = sod.ProductID
+		Inner Join Sales.Customer c on c.CustomerID = soh.CustomerID
+		Inner Join Person.Person pr on pr.BusinessEntityID = c.PersonID
+		Inner Join Person.PersonPhone pp on pp.BusinessEntityID = pr.BusinessEntityID
+	 Where @PhoneNumber = PhoneNumber
+		and @AccountNumber = soh.AccountNumber
+	 Group by 
+  		Concat(FirstName,' ',LastName)
+		,soh.AccountNumber
+		,PhoneNumber
+		,OrderDate
+		,p.Name)
+--93C-- 
+Exec CustomerPurchaseHistory
+	@PhoneNumber = '620-555-0117'
+	,@AccountNumber = '10-4020-000695'
+ 
+--93D--
+Drop Procedure CustomerPurchaseHistory
+
+--Question 95--
+--95A--
+SELECT  P.ProductID, 
+    p.Name as ProductName
+    ,OrderDate
+    ,Sum(OrderQty) as Qty
+    ,SUM(pod.LineTotal) AS LineTotal 
+FROM Purchasing.PurchaseOrderDetail pod
+      INNER JOIN Production.Product p ON pod.ProductID = p.ProductID 
+      INNER JOIN Purchasing.PurchaseOrderHeader AS poh ON poh.PurchaseOrderID = pod.PurchaseOrderID 
+ GROUP BY 
+	P.ProductID
+	,P.Name
+	,OrderDate
+ 
+--95B--
+CREATE FUNCTION dbo.ufnSalesByVendor (@VendorID INT) 
+	RETURNS TABLE 
+	AS 
+	 RETURN 
+	  (SELECT  P.ProductID, 
+                p.Name as ProductName
+                ,OrderDate
+                ,Sum(OrderQty) as Qty
+                ,SUM(pod.LineTotal) AS LineTotal 
+            FROM Purchasing.PurchaseOrderDetail pod
+                INNER JOIN Production.Product p ON pod.ProductID = p.ProductID 
+                INNER JOIN Purchasing.PurchaseOrderHeader AS poh ON poh.PurchaseOrderID = pod.PurchaseOrderID 
+            WHERE poh.VendorID = @VendorID 
+            GROUP BY 
+	        P.ProductID
+	        ,P.Name
+	        ,OrderDate)
+--95C--
+Select * from ufnSalesByVendor(1604)
+ 
+--95D--
+Select 
+	f.*
+From Purchasing.Vendor v
+Cross Apply ufnSalesByVendor(v.BusinessEntityID) f 
+ 
+--95E-- 
+Drop Function dbo.ufnSalesByVendor
+
+--Question 96--
+--96A--
+Select 	
+    Count(*) as ProductCNT
+From (
+	Select
+		Count(Distinct ProductID) as ProductID
+	From Production.ProductListPriceHistory
+	Group by ProductID
+	Having count(*) > 1) a
+
+--96B--
+With CTE as(
+	Select 
+		ProductID
+		,Count(*) as CNT
+	From Production.ProductListPriceHistory
+	Group by ProductID)
+ 
+	Select 
+		Count(ProductID) ProductCNT
+	From CTE
+	Where CNT > 1 
+
+--96C--
+Select  
+	Count(distinct p1.ProductID) as ProductCNT
+From Production.ProductListPriceHistory p1
+	Inner Join Production.ProductListPriceHistory p2 
+				 on p1.ProductID = p2.ProductID
+				and p1.ListPrice <> p2.ListPrice
+
+--Question 97--
+
+--97A--
+--Exec in 14 seconds
+Select  * 
+From TestTable
+Where BusinessEntityID = 289
+
+--97B--
+Create Index idx_TestTable_BusinessEntityID
+on TestTable (BusinessEntityID)
+
+--97C--
+--Exec less than 1 second
+Select  * 
+From TestTable
+Where BusinessEntityID = 289
