@@ -3,6 +3,7 @@
 This repository contains a collection of SQL queries I wrote while completing SQL courses. 
 
 15 DAYS OF SQL: THE COMPLETE SQL MASTERCLASS 2025 (PostgreSQL)
+
 101 PRACTICE SQL QUESTIONS: BASIC TO ADVANCED (Microsoft SQL)
 
 The queries cover a wide range of SQL concepts, including:
